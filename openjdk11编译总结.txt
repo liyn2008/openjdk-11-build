@@ -1,0 +1,117 @@
+1、openjdk 11 源码下载
+https://github.com/AdoptOpenJDK/openjdk-jdk11u
+hg clone http://hg.openjdk.java.net/jdk/jdk11
+docker 环境中 用hg下载，速度较快
+
+2、构建文档地址
+https://hg.openjdk.java.net/jdk8/jdk8/raw-file/tip/README-builds.html#make
+
+3、安装 cygwin
+cygwin窗口
+cd /cygdrive/d/code/jdk/openjdk11.28src/
+
+#liunx可以用
+bash ./configure --with-target-bits=64 --disable-warnings-as-errors --with-ucrt-dll-dir="/cygdrive/c/Program Files (x86)/Windows Kits/10/Redist/10.0.18362.0/ucrt/DLLs/x64" --with-boot-jdk="/cygdrive/c/Program Files/Java/jdk-10"
+
+#windows可以用
+bash ./configure --with-target-bits=64 --disable-warnings-as-errors --with-boot-jdk="/cygdrive/d/Java/jdk-10" --with-freetype-include="/cygdrive/D/code/jdk/freetype-windows-binaries/include"  --with-freetype-lib="/cygdrive/D/code/jdk/freetype-windows-binaries/lib" --with-jvm-variants=server --with-debug-level=release
+
+
+bash ./configure --with-target-bits=64 --disable-warnings-as-errors --with-boot-jdk="/cygdrive/c/jdk10.0.2/" --with-freetype-include="/cygdrive/c/GnuWin32/include"  --with-freetype-lib="/cygdrive/c/GnuWin32/lib" --with-jvm-variants=server --with-debug-level=release
+
+
+using configure arguments '--verbose --with-version-opt=201903030947 --without-version-pre --with-version-build=30 --with-vendor-version-string=AdoptOpenJDK --with-vendor-url=https://adoptopenjdk.net/ --with-vendor-name=AdoptOpenJDK --with-vendor-vm-bug-url=https://github.com/AdoptOpenJDK/openjdk-build/issues --with-boot-jdk=/cygdrive/c/openjdk/jdk11 --disable-warnings-as-errors --with-toolchain-version=2013
+
+
+bash ./configure --enable-debug --with-target-bits=64 --disable-warnings-as-errors  --with-toolchain-version=2017
+
+
+cmd窗口  安装一组包unzip
+cd d:/
+setup-x86_64.exe -q -P autoconf 
+setup-x86_64.exe -q -P make 
+setup-x86_64.exe -q -P unzip
+setup-x86_64.exe -q -P wget
+setup-x86_64.exe -q -P tar
+setup-x86_64.exe -q -P zip
+setup-x86_64.exe -q -P gcc-core
+setup-x86_64.exe -q -P gcc-g++
+setup-x86_64.exe -q -P make
+setup-x86_64.exe -q -P gdb
+setup-x86_64.exe -q -P binutils
+
+
+setup-x86_64.exe -q -P autoconf
+
+gcc-core、gcc-g++、make、gdb、binutils
+
+wget https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+
+
+安装 hg
+easy_install -i https://pypi.doubanio.com/simple  -U mercurial==3.7 
+
+pip install mercurial=3.7 -i https://pypi.doubanio.com/simple 
+
+下载 freetype的dll包
+https://github.com/ubawurinna/freetype-windows-binaries
+
+4、遇到的问题及解决办法
+
+1、
+configure: Found Visual Studio installation at /cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/ using VS140COMNTOOLS variable
+configure: Found Microsoft Visual Studio 2015
+configure: Rewriting VS_ENV_CMD to "/cygdrive/c/progra~2/micros~1.0/vc/bin/amd64/vcvars64.bat"
+configure: Trying to extract Visual Studio environment variables
+ERROR: Cannot determine the location of the VS Common Tools folder.
+
+以上vs路径问题，需要到 待编译的jdk源码路径中\make\autoconf\toolchain_windows.m4 文件去查询原因
+VS100COMNTOOLS=D:\VS10.0\Common7\Tools\
+VS_BASE=D:\VS10.0
+--with-tools-dir=/cygdrive/D/VS10.0/VC/bin 不能用，有了上面两项vs配置，这行配置就不能用了 
+
+2010版本可能make不了
+换成2017
+VS150COMNTOOLS  #2017版本，key却是150的，这可以在toolchain_windows.m4 文件去查询原因
+改了一行
+UCRT_DLL_DIR="/cygdrive/C/Program Files (x86)/Windows Kits/10/Redist/10.0.17763.0/ucrt/DLLs/$dll_subdir"  硬编码了 
+
+
+--with-freetype="/cygdrive/D/code/jdk/freetype-windows-binaries"
+
+--with-freetype-include="/cygdrive/D/code/jdk/freetype-windows-binaries/include"  --with-freetype-lib="/cygdrive/D/code/jdk/freetype-windows-binaries/lib"
+
+2、
+configure: error: Target CPU mismatch. We are building for x86_64 but CL is for "??"; expected "x64".
+编译OpenJDK8的时候也遇到过。修改办法不同了：
+打开make/autoconf/toolchain.m4
+找到相应的字串Target CPU mismatch，有两个办法：
+注释这一段if。
+把AC_MSG_ERROR改成AC_MSG_RESULT
+
+3、
+configure: error: Only bundled freetype can be specified on Mac and Windows
+打开make/autoconf/lib-freetype.m4，找到这一句。
+注释这一段if，或者把AC_MSG_ERROR改成AC_MSG_RESULT。
+
+https://www.codetd.com/article/2901356
+
+4、
+configure: Found freetype include files at /cygdrive/c/GnuWin32/include using --with-freetype
+configure: Could not find /cygdrive/c/GnuWin32/lib/freetype.dll. Ignoring location.
+configure: error: Can not find or use freetype at location given by --with-freetype-lib|include
+缺少freetype.dll，下载：https://github.com/ubawurinna/freetype-windows-binaries
+
+5、
+make[3]: *** [lib/CompileGtest.gmk:61：/cygdrive/c/openjdk11_build/src/build/windows-x86_64-normal-server-release/hotspot/variant-server/libjvm/gtest/objs/test_json.obj] 错误 1
+很多莫名奇妙的错误，是由于编码问题，将utf-8编码改成 utf-16尝试一下或者换其他编码
+
+6、
+LINK : warning LNK4044: 无法识别的选项“/Lc:/openjdk11_build/third/freetype-2.9.1/lib”；已忽略
+LINK : warning LNK4044: 无法识别的选项“/lfreetype”；已忽略
+从报错来看，显然是把原来正确给替换成错误的了。
+具体解决办法（参考牛人编译成功的案例，对比发现的差异，也是国内首次公开解决办法）：
+make/lib/Awt2dLibraries.gmk
+1、自行定义一个正确的freetype目录名，然后替换修改后的。
+2、去掉修改freetype的语句。
+
